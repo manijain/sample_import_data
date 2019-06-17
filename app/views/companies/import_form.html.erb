@@ -1,0 +1,13 @@
+<div class="import_container">
+  <%= form_tag import_employees_companies_path, multipart: true do %>
+    <div class="field">
+      <%= label_tag :company_id, "Company name" %>
+      <%= select_tag :company_id, options_from_collection_for_select(@companies, "id", "name") %>
+    </div>
+    <div class="field">
+      <%= label_tag :file, "Attach Employee CSV" %>
+      <%= file_field_tag :file %>
+    </div>
+    <%= submit_tag "Import CSV" %>
+  <% end %>
+</div>
