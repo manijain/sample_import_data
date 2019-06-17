@@ -67,15 +67,15 @@ class CompaniesController < ApplicationController
 
   def import_employees
     if params[:company_id].blank?
-      redirect_to import_form_companies_path, alert: "Please select company to import." and return
+      redirect_to employees_path, alert: "Please select company to import."
     elsif params[:file].blank?
-      redirect_to import_form_companies_path, alert: "Please select valid CSV to import." and return
+      redirect_to employees_path, alert: "Please select valid CSV to import."
     else
       if params[:file].content_type == "text/csv"
-       Company.import_employees(params[:company_id], params[:file])
-       redirect_to employees_path, notice: "Employees data imported!"
+        Company.import_employees(params[:company_id], params[:file])
+        redirect_to employees_path, notice: "Employees data imported!"
       else
-        edirect_to import_form_companies_path, alert: "Please select valid CSV to import." and return
+        redirect_to employees_path, alert: "Please select valid CSV to import."
       end
     end
   end
