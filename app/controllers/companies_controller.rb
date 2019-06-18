@@ -72,8 +72,8 @@ class CompaniesController < ApplicationController
       redirect_to employees_path, alert: "Please select valid CSV to import."
     else
       if params[:file].content_type == "text/csv"
-        Company.import_employees(params[:company_id], params[:file])
-        redirect_to employees_path, notice: "Employees data imported!"
+        total_record, saved_record, invalid_record = Company.import_employees(params[:company_id], params[:file])
+        redirect_to employees_path, notice: "Employees data imported !! Total Imported Records : #{total_record}, Total Saved Records : #{saved_record}, Invalid Records: #{invalid_record}"
       else
         redirect_to employees_path, alert: "Please select valid CSV to import."
       end

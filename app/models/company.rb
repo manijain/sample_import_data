@@ -2,14 +2,23 @@ class Company < ApplicationRecord
   require 'csv'
   require 'fileutils'
 
-  has_many :employees
+  has_many :employees, dependent: :destroy
   validates :name, presence: true
 
   def self.import_employees(company_id, file)
     company = Company.find_by(id: company_id.to_i)
     emp_manager_hash = {}
+    total_record = 0
+    saved_record = 0
+    invalid_record = 0
+    
     CSV.foreach(file.path, :headers => true) do |row|
-      @employee = Employee.find_or_create_by(email: row[1].to_s, name: row[0].to_s, company_id: company.id)
+      total_record += 1
+      invalid_record += 1 and next if row[1].blank?
+      employee_exist = Employee.find_by(email: row[1].to_s)
+      next if employee_exist.present?
+
+      @employee = Employee.find_or_create_by(email: row[1].to_s, name: row[0].to_s, company_id: company.id, phone: row[2].to_s)
       # set reporting manager
       if row[3].present?
         report_manager = Employee.find_by(email: row[3].to_s, company_id: company.id)
@@ -19,7 +28,7 @@ class Company < ApplicationRecord
           emp_manager_hash[@employee.id.to_i] = { email: row[3].to_s, company_id: company.id }
         end
       end
-      @employee.phone = row[2].to_s if row[2].present?
+      saved_record += 1
       @employee.save
 
       # set policy details
@@ -30,19 +39,21 @@ class Company < ApplicationRecord
           policy = Policy.find_or_create_by(name: pname, company_id: company.id)
           unless @employee.policies.include?(policy)
             @employee.policies << policy
-            @employee.save
           end
         end
       end
     end
 
-    emp_manager_hash.each do |key, value|
-      employee = Employee.find_by(id: key)
-      if employee.present?
-        manager_id = Employee.find_by(email: value[:email], company_id: value[:company_id]).try(:id)
-        employee.parent_id = manager_id
-        employee.save
+    if emp_manager_hash.present?
+      emp_manager_hash.each do |key, value|
+        employee = Employee.find_by(id: key)
+        if employee.present?
+          manager_id = Employee.find_by(email: value[:email], company_id: value[:company_id]).try(:id)
+          employee.parent_id = manager_id
+          employee.save
+        end
       end
     end
+    return total_record, saved_record, invalid_record
   end
 end
